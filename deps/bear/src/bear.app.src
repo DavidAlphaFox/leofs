@@ -1,0 +1,9 @@
+{application, bear,
+ [
+  {description, "A set of statistics functions for erlang"},
+  {vsn, "0.8.2"},
+  {registered, []},
+  {applications, [kernel, stdlib]},
+  {env, []},
+  {modules, []}
+ ]}.

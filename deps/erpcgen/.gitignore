@@ -1,0 +1,9 @@
+*.[oa]
+*.beam
+*.swp
+ebin
+.eunit/
+deps/
+src/xdr_parse.erl
+examples/*/*.[eh]rl
+.rebar/

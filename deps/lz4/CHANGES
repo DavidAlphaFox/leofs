@@ -1,0 +1,19 @@
+0.2.2 (2014/7/18)
+=================
+
+- NIF: replaces obsolute function LZ4_uncompress() with LZ4_decompress_safe()
+
+0.2.1 (2014/7/9)
+=================
+
+- update lz4 implementation
+
+0.1.1 (2012/10/3)
+=================
+
+- add travis.yml
+
+0.1.0 (2012/10/2)
+=================
+
+- first release

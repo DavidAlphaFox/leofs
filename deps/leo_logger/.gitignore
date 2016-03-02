@@ -1,0 +1,8 @@
+.eunit/
+deps/
+ebin/
+.leo_logger_dialyzer_plt
+leo_logger.dot
+leo_logger.png
+.rebar/
+doc/

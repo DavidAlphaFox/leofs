@@ -1,0 +1,8 @@
+.eunit/
+deps/
+ebin/
+.leo_mq_dialyzer_plt
+leo_mq.dot
+leo_mq.png
+.rebar/
+doc/

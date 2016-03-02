@@ -1,0 +1,6 @@
+*.beam
+*.swp
+ebin
+.eunit/
+deps/
+.rebar/
