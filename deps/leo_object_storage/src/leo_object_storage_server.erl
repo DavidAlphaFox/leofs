@@ -355,6 +355,7 @@ init([Id, SeqNo, MetaDBId, CompactionWorkerId, DiagnosisLogId, RootPath, IsStric
     %% open object-storage.
     case get_raw_path(object, ObjectStorageDir, ObjectStoragePath) of
         {ok, ObjectStorageRawPath} ->
+            %% 打开文件
             case leo_object_storage_haystack:open(ObjectStorageRawPath) of
                 {ok, [ObjectWriteHandler, ObjectReadHandler, AVSVsnBin]} ->
                     StorageInfo = #backend_info{
@@ -385,6 +386,7 @@ init([Id, SeqNo, MetaDBId, CompactionWorkerId, DiagnosisLogId, RootPath, IsStric
                                 is_locked = false,
                                 threshold_slow_processing = ?env_threshold_slow_processing()
                                }};
+                %% 打开失败之后
                 {error, Cause} ->
                     error_logger:error_msg("~p,~p,~p,~p~n",
                                            [{module, ?MODULE_STRING}, {function, "init/4"},
@@ -419,6 +421,7 @@ handle_call({put, #?OBJECT{addr_id = AddrId,
                   put_1(Key_1, Object, State)
           end,
     {Reply, State_1} = execute(put, Key, Fun, ThresholdSlowProcessing),
+    %% 每次执行后，要求Erlang进行垃圾回收
     erlang:garbage_collect(self()),
     {reply, Reply, State_1};
 
@@ -679,6 +682,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %% @doc Open the conatainer
 %% @private
+%% 打开存储文件
 open_container(#state{object_storage =
                           #backend_info{
                              linked_path = FilePath}} = State) ->
@@ -696,7 +700,8 @@ open_container(#state{object_storage =
             State
     end.
 
-
+%% 执行数据操作并执行时间统计
+%% 如果超时则通知event进程
 %% @doc Execute the function - put/get/delete
 %% @private
 -spec(execute(Method, Key, Fun, ThresholdSlowProcessing) ->
@@ -737,6 +742,7 @@ after_proc(Ret, State) ->
 put_1(Key, Object, #state{meta_db_id     = MetaDBId,
                           object_storage = StorageInfo,
                           storage_stats  = StorageStats} = State) ->
+    %% 在db中寻找是否已经存储了对象的信息
     {Ret, DiffRec, OldSize} =
         case leo_object_storage_haystack:head(MetaDBId, Key) of
             not_found ->
@@ -756,9 +762,12 @@ put_1(Key, Object, #state{meta_db_id     = MetaDBId,
         end,
     case Ret of
         ok ->
+            %% 计算新的对象大小
             NewSize = leo_object_storage_haystack:calc_obj_size(Object),
+            %% 成功会返回{ok,Checksum}
             Reply   = leo_object_storage_haystack:put(MetaDBId, StorageInfo, Object),
             State_1 = after_proc(Reply, State),
+            %% 重新计算对象的大小
             {Reply, State_1#state{
                       storage_stats = StorageStats#storage_stats{
                                         total_sizes  = StorageStats#storage_stats.total_sizes  + NewSize,
@@ -824,9 +833,11 @@ delete_1(Key, Object, #state{meta_db_id     = MetaDBId,
 get_raw_path(object, ObjectStorageRootDir, SymLinkPath) ->
     case filelib:ensure_dir(ObjectStorageRootDir) of
         ok ->
+            %% 尝试读下是不是文件链接
             case file:read_link(SymLinkPath) of
                 {ok, FileName} ->
                     {ok, FileName};
+                %% 链接不存在
                 {error, enoent} ->
                     RawPath = ?gen_raw_file_path(SymLinkPath),
 

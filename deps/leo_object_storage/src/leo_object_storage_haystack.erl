@@ -87,7 +87,9 @@ calc_obj_size(KSize, DSize) ->
 %% @doc Open a new or existing datastore
 -spec(open(FilePath) ->
              {ok, port(), port(), binary()} | {error, any()} when FilePath::string()).
+%% 默认文件打开方式
 open(FilePath) ->
+    %% 默认是以读写的方式打开文件
     open(FilePath, read_and_write).
 
 -spec(open(FilePath, Option) ->
@@ -99,8 +101,10 @@ open(FilePath, read_and_write) ->
         {ok, WriteHandler} ->
             case open_read_handler(FilePath) of
                 {ok, [ReadHandler, Bin]} ->
+                    %% 创建两个句柄
                     {ok, [WriteHandler, ReadHandler, Bin]};
                 Error ->
+                    %%  这个地方是不是应该将writer handler 关闭掉呢？
                     Error
             end;
         Error ->
@@ -311,11 +315,15 @@ add_incorrect_data(WriteHandler, Offset, Data) ->
 %%--------------------------------------------------------------------
 %% @doc Create an object-container and metadata into the object-storage
 %% @private
+%% 创建文件
 create_file(FilePath) ->
     case catch file:open(FilePath, [raw, write,  binary, append]) of
+        %% 读写追加方式打开
         {ok, PutFileHandler} ->
+            %% 打开成功后直接移动到文件尾部
             case file:position(PutFileHandler, eof) of
                 {ok, Offset} when Offset == 0 ->
+                    %% 新的文件，放入超级块
                     put_super_block(PutFileHandler);
                 {ok,_Offset} ->
                     {ok, PutFileHandler};
@@ -345,7 +353,7 @@ create_file(FilePath) ->
 %% @private
 open_fun(FilePath) ->
     open_fun(FilePath, 0).
-
+%% 尝试3次打开，如果都失败了，就报错
 open_fun(_FilePath, 3) ->
     {error, ?ERROR_FILE_OPEN};
 
@@ -363,6 +371,7 @@ open_fun(FilePath, RetryTimes) ->
                     open_fun(FilePath, RetryTimes+1)
             end;
         true ->
+            %% 以只读的方式打开
             case file:open(FilePath, [raw, read, binary]) of
                 {ok, FileHandler} ->
                     {ok, FileHandler};
@@ -498,6 +507,8 @@ calc_pos(StartPos, EndPos, _ObjectSize) ->
 %% @doc Insert a super-block into an object container (*.avs)
 %% @private
 put_super_block(ObjectStorageWriteHandler) ->
+    %% 超级块相当于这个leofs存储的方式的描述和版本
+    %% 和inode这种超级块没任何关系
     case file:pwrite(ObjectStorageWriteHandler, 0, ?AVS_SUPER_BLOCK) of
         ok ->
             {ok, ObjectStorageWriteHandler};
@@ -560,7 +571,7 @@ create_needle(#?OBJECT{addr_id    = AddrId,
 %% @private
 put_fun_1(MetaDBId, StorageInfo, Object) ->
     #backend_info{write_handler = ObjectStorageWriteHandler} = StorageInfo,
-
+    %% 直接移动到文件尾部
     case file:position(ObjectStorageWriteHandler, eof) of
         {ok, Offset} ->
             put_fun_2(MetaDBId, StorageInfo, Object#?OBJECT{offset = Offset});
@@ -598,6 +609,7 @@ put_fun_2(MetaDBId, StorageInfo, #?OBJECT{key = Key,
                    false ->
                        Object_1
                end,
+    %% 创建一个needle，needle是leofs的存储对象的称呼          
     Needle = create_needle(Object_2),
     Metadata = leo_object_storage_transformer:object_to_metadata(Object_2),
     put_fun_3(MetaDBId, StorageInfo, Needle, Metadata).
@@ -611,8 +623,10 @@ put_fun_3(MetaDBId, StorageInfo, Needle, #?METADATA{key      = Key,
                   avs_ver_cur   = AVSVsnBin} = StorageInfo,
 
     Key4BackendDB = ?gen_backend_key(AVSVsnBin, AddrId, Key),
+    %% 写入文件
     case file:pwrite(WriteHandler, Offset, Needle) of
         ok ->
+            %% 将元信息写入数据库
             case catch leo_backend_db_api:put(MetaDBId,
                                               Key4BackendDB,
                                               term_to_binary(Meta)) of

@@ -547,6 +547,8 @@ do_request(get, [{AddrId, Key}, StartPos, EndPos, IsForcedCheck]) ->
         _ ->
             {error, ?ERROR_PROCESS_NOT_FOUND}
     end;
+%% 存储请求
+%% 接收meta和数据    
 do_request(store, [Metadata, Bin]) ->
     Metadata_1 = leo_object_storage_transformer:transform_metadata(Metadata),
     #?METADATA{addr_id = AddrId,
@@ -557,6 +559,7 @@ do_request(store, [Metadata, Bin]) ->
         _ ->
             {error, ?ERROR_PROCESS_NOT_FOUND}
     end;
+%% 将    
 do_request(put, [Key, Object]) ->
     KeyBin = term_to_binary(Key),
     case get_object_storage_pid(KeyBin) of
