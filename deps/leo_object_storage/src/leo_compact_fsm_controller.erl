@@ -297,6 +297,7 @@ decrease() ->
              {ok, ?ST_IDLING, State} when Option::[any()],
                                           State::#state{}).
 init([ServerPairL]) ->
+    %% 得到所有存储的ID
     AllTargets = leo_object_storage_api:get_object_storage_pid('all'),
     TotalNumOfTargets = erlang:length(AllTargets),
     {ok, ?ST_IDLING, #state{status = ?ST_IDLING,
@@ -331,8 +332,9 @@ idling(#event_info{event = ?EVENT_RUN,
 
     [leo_object_storage_server:unlock(ObjStorageId)
      || {_, ObjStorageId} <- ServerPairs],
-
+    %% 进入run状态
     NextState = ?ST_RUNNING,
+    %% 启动工作
     {ok, NewState} = start_jobs_as_possible(
                        State#state{status = NextState,
                                    pending_targets    = TargetPids,
@@ -410,7 +412,8 @@ running(#event_info{id = Id,
     {next_state, NextState,
      State#state{status = NextState,
                  locked_targets = LockedTargets_1}};
-
+%% 如果还有等待的目标
+%% 那么要保持Running的状态
 running(#event_info{event = ?EVENT_FINISH,
                     client_pid  = Pid,
                     finished_id = FinishedId,
@@ -462,7 +465,9 @@ running(#event_info{event = ?EVENT_FINISH,
                  child_pids      = orddict:erase(Pid, ChildPids),
                  reports = [Report|AccReports]
                 }};
-
+%% 当所有压缩都执行完之后，进入idle状态
+%% 这里面利用了list的匹配的一些特性，对于[_,_|_]是会匹配[a,b]
+%% 也就是说，近当列表只有元素[a]时，才会匹配[_|_]
 running(#event_info{event  = ?EVENT_FINISH,
                     report = Report}, #state{server_pairs     = ServerPairs,
                                              pending_targets  = [],
@@ -472,6 +477,8 @@ running(#event_info{event  = ?EVENT_FINISH,
                                              reports = AccReports
                                             } = State) ->
     AccReports_1 = lists:sort(lists:flatten([Report|AccReports])),
+    %% 因为没有peding的目标了
+    %% 向发送消息的进程发送stop
     [erlang:send(Pid, stop) || {Pid, _} <- orddict:to_list(ChildPids)],
     [leo_object_storage_server:unlock(ObjStorageId)
      || {_, ObjStorageId} <- ServerPairs],

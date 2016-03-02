@@ -136,10 +136,12 @@ child_spec(error, Args, Interval) ->
 %% @doc Creates the gen_server process as part of a supervision tree
 %%      <pre>callback_mod need to implement "leo_notify_behaviour"<pre>
 %% @end
+%% 添加订阅
 -spec(start_subscriber(SubId, FilterSrcL, CallbackMod) ->
              ok | no_return() when SubId::atom(),
                                    FilterSrcL::[any()],
                                    CallbackMod::module()).
+%% 转化后的ID，过滤器，回调模块
 start_subscriber(SubId, FilterSrcL, CallbackMod) ->
     FilterSrcL_1 = [{src, Filter} || Filter <- FilterSrcL],
     Spec = {SubId,
@@ -163,6 +165,7 @@ start_subscriber(SubId, FilterSrcL, CallbackMod) ->
 %% ---------------------------------------------------------------------
 %% @doc supervisor callback - Module:init(Args) -> Result
 %% @end
+%% 启动事件收集器
 init([]) ->
     ChildProcs = [
                   {leo_watchdog_collector,

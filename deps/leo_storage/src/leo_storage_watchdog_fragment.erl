@@ -113,7 +113,7 @@ init(_State) ->
 update_property(_,_,_) ->
     ok.
 
-
+%% 定时调用该函数
 %% @dog Call execution of the watchdog
 -spec(handle_call(Id, State) ->
              {ok, State} |

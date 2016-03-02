@@ -63,6 +63,8 @@
 %% API
 %%====================================================================
 %% @doc Creates a gen_fsm process as part of a supervision tree
+%% 启动压缩工作进程
+%% 每个压缩进程只负责一个ID的垃圾回收
 -spec(start_link(Id, ObjStorageId, MetaDBId, LoggerId) ->
              {ok, pid()} | {error, any()} when Id::atom(),
                                                ObjStorageId::atom(),
@@ -231,6 +233,8 @@ format_status(_Opt, [_PDict, State]) ->
 %%====================================================================
 %% @doc State of 'idle'
 %%
+%% 直接进入idling状态
+%% 如果收到EVENT_RUN进入执行状态
 -spec(idling(EventInfo, From, State) ->
              {next_state, ?ST_IDLING | ?ST_RUNNING, State}
                  when EventInfo::#compaction_event_info{},

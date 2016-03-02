@@ -100,6 +100,7 @@ handle_notify(?WD_SUB_ID_1 = Id,_Alarm,_Unixtime) ->
         false ->
             ok
     end;
+%%  收到特定的事件，要求对象存储进行压缩
 handle_notify(?WD_SUB_ID_2, #watchdog_alarm{state = #watchdog_state{
                                                        level = Level,
                                                        props = Props}},_Unixtime) ->
@@ -113,7 +114,8 @@ handle_notify(?WD_SUB_ID_2, #watchdog_alarm{state = #watchdog_state{
                     timer:sleep(?DEF_WAIT_TIME),
                     ThisTime = leo_date:now(),
                     AutoCompactionInterval = ?env_auto_compaction_interval(),
-
+                    %%  获得状态
+                    %%  如果是处在idle的状态，进行数据压缩
                     case leo_compact_fsm_controller:state() of
                         {ok, #compaction_stats{status = ?ST_IDLING,
                                                pending_targets = PendingTargets,

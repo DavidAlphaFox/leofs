@@ -204,6 +204,7 @@ start_child_3_1(DeviceIndex, ContainerIndex, BackendDBSupPid, Props, Acc) ->
 %% @doc Launch a Compaction manager
 %%      under the leo_object_storage_sup
 %% @private
+%% 所有的存储都启动后，启动压缩管理器
 start_child_4(ServerPairL) ->
     ChildSpec = {leo_compact_fsm_controller,
                  {leo_compact_fsm_controller, start_link, [ServerPairL]},

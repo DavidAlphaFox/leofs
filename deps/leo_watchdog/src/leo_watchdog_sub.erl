@@ -70,6 +70,7 @@ start_link(Id, CallbackMod) ->
                                                     Pid::pid(),
                                                     Error::{already_started,Pid} | term()).
 start_link(Id, Filters, CallbackMod) ->
+    %% 默认的安全水位线
     MaxSafeTimes = ?env_wd_loosen_control_at_safe_count(),
     start_link(Id, Filters, MaxSafeTimes, CallbackMod).
 
@@ -127,6 +128,8 @@ handle_info(timeout, #state{id = Id,
                             filter = Filter,
                             consecutive_safe_times = SafeTimes,
                             max_safe_times = MaxSafeTimes} = State) ->
+    %% 找出所有从Filter发出的事件
+    %% 列表推导式是忽略不匹配的项
     AlarmL = lists:flatten([A || {ok, A}
                                      <- [leo_watchdog_state:find_by_id(F)
                                          || {src, F} <- Filter]]),
@@ -136,6 +139,7 @@ handle_info(timeout, #state{id = Id,
             SafeTimes_1 =
                 case (MaxSafeTimes =< SafeTimes) of
                     true ->
+                        %% 直接用这个进程调用callback的handle_notify
                         catch erlang:apply(Mod, handle_notify,
                                            [Id, [], MaxSafeTimes, leo_date:unixtime()]),
                         1;

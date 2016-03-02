@@ -625,7 +625,7 @@ handle_call({append_compaction_history, History}, _From,
                       StorageStats#storage_stats{
                         compaction_hist = NewHist}
                  }};
-
+%% 得到压缩进程
 %% Retrieve the compaction worker
 handle_call(get_compaction_worker, _From,
             #state{compaction_worker_id = CompactionWorkerId} = State) ->

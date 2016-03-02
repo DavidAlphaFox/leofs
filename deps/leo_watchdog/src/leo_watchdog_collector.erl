@@ -101,7 +101,9 @@ init([Interval]) ->
 %% @doc gen_server callback - Module:handle_call(Request, From, State) -> Result
 handle_call(stop, _From, State) ->
     {stop, normal, stopped, State};
-
+%% 添加事件
+%% 增加每个事件的计数
+%% 增加总事件的计数
 %% @doc Suspend the server
 handle_call({push, Msg},_From, #state{count = Count,
                                       collection = Collection,
@@ -115,7 +117,8 @@ handle_call({push, Msg},_From, #state{count = Count,
     {reply, ok, State#state{count = Count + 1,
                             collection = dict:store(Msg, CountOfMsg,
                                                     Collection)}, Interval};
-
+%% 将所有的事件拉取出来
+%% 同时将事件存储晴空
 handle_call(pull,_From, #state{count = Count,
                                collection = Collection,
                                interval = Interval} = State) ->
@@ -136,6 +139,7 @@ handle_cast(_Msg, #state{interval = Interval} = State) ->
 %% <p>
 %% gen_server callback - Module:handle_info(Info, State) -> Result.
 %% </p>
+%% 定时清理掉没有被拉取的事件。
 handle_info(timeout, #state{interval = Interval} = State) ->
     {noreply, State#state{count = 0,
                           collection = dict:new()}, Interval};

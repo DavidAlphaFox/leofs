@@ -41,6 +41,7 @@
 start(_Type, _Args) ->
     consider_profiling(),
     application:start(sasl),
+    %% 启动os_mon和elarm
     application:start(os_mon),
     application:start(elarm),
 

@@ -274,6 +274,7 @@ synchronize(Key, ErrorType) ->
 %% API for Admin and System#4
 %%--------------------------------------------------------------------
 %% @doc Execute data-compaction
+%% 要求进行数据压缩
 -spec(compact(start, NumOfTargets, MaxProc) ->
              ok |
              {error, any()} when NumOfTargets::'all' | integer(),
