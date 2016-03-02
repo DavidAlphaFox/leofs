@@ -575,12 +575,14 @@ prepare(#compaction_worker_state{obj_storage_id = ObjStorageId,
             file_path   = FilePath}} = ?get_obj_storage_info(ObjStorageId),
 
     %% Retrieve the remain disk-size
+    %% 需要计算剩余磁盘容量
     case calc_remain_disksize(MetaDBId, LinkedPath) of
         {ok, RemainSize} ->
             case (RemainSize > 0) of
                 true ->
                     %% Open the current object-container
                     %% and a new object-container
+                    %% 需要打开一个新的文件
                     prepare_1(LinkedPath, FilePath, State);
                 false ->
                     {{error, system_limit}, State}
