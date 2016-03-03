@@ -322,7 +322,7 @@ handle_raise(AlarmId, Src, AddInfo,
 
 get_alarm_config(AlarmId, CfgCB, CfgState) ->
     CfgCB:get_mapping(AlarmId, CfgState).
-
+%% 纪录报警
 process_raise(AlarmId, Src, AddInfo, Cfg,
               #state{ alarmlist_cb = AlCB,
                       alarmlist_state = AlState,
