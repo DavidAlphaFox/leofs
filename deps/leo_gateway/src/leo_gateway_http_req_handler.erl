@@ -102,8 +102,10 @@ handle(?HTTP_GET = HTTPMethod, Req, Key, #req_params{is_cached = true,
             Handler:get_object_with_cache(Req, Key, CachedObj, Params);
         _ ->
             case catch leo_cache_api:get(Key) of
+              %% Cache命中
                 {ok, CachedObj0} ->
                     CachedObj1 = binary_to_term(CachedObj0),
+                    %% 直接Cache返回
                     Handler:get_object_with_cache(Req, Key, CachedObj1, Params);
                 _ ->
                     handle(HTTPMethod, Req, Key, Params#req_params{is_cached = false})
@@ -112,6 +114,7 @@ handle(?HTTP_GET = HTTPMethod, Req, Key, #req_params{is_cached = true,
 
 %% @doc GET operation on Object.
 %% @private
+%% 冷加载数据
 handle(?HTTP_GET, Req, Key, #req_params{handler = Handler} = Params) ->
     Handler:get_object(Req, Key, Params);
 

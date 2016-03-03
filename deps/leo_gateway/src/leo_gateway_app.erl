@@ -89,6 +89,7 @@ start() ->
 %% @doc application start callback for leo_gateway.
 start(_Type, _StartArgs) ->
     consider_profiling(),
+    %% 启动watchdog
     application:start(leo_watchdog),
     App = leo_gateway,
 
@@ -235,7 +236,8 @@ after_process_0(Error) ->
     io:format("~p:~s,~w - cause:~p~n", [?MODULE, "after_process/1", ?LINE, Error]),
     init:stop().
 
-
+%% 启动相应的handler
+%% http,S3,nfs等
 %% @private
 after_process_1(Pid, Managers) ->
     %% Launch SNMPA

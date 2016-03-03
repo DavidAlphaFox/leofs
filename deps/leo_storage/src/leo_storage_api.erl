@@ -101,7 +101,7 @@ register_in_monitor_1([Node|Rest], Pid, RequestedTimes) ->
                   GroupL_2 = ?env_grp_level_2(),
                   NumOfNodes = ?env_num_of_vnodes(),
                   RPCPort = ?env_rpc_port(),
-
+                  %% 向管理节点注册要求监控自己
                   case rpc:call(Node_1, leo_manager_api, register,
                                 [RequestedTimes, Pid, erlang:node(), ?PERSISTENT_NODE,
                                  GroupL_1, GroupL_2, NumOfNodes, RPCPort], ?DEF_REQ_TIMEOUT) of
