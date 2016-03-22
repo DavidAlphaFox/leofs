@@ -25,6 +25,7 @@
 %% @reference https://github.com/leo-project/leo_cache/blob/master/src/leo_cache_server_dcerl.erl
 %% @end
 %%======================================================================
+%% 缓存的接口定义
 -module(leo_cache_api).
 -author("Yosuke Hara").
 
