@@ -220,8 +220,10 @@ delete(MetaDBId, StorageInfo, Object) ->
 -spec(head(MetaDBId, Key) ->
              {ok, binary()} | not_found | {error, any()} when MetaDBId::atom(),
                                                               Key::binary()).
+%% 获取元信息
 head(MetaDBId, Key) ->
     case catch leo_backend_db_api:get(MetaDBId, Key) of
+				%% 从db中得到了元信息
         {ok, MetadataBin} ->
             case leo_object_storage_transformer:transform_metadata(
                    binary_to_term(MetadataBin)) of
@@ -545,6 +547,17 @@ create_needle(#?OBJECT{addr_id    = AddrId,
                   true  -> << Key/binary, Body/binary, Padding/binary >>;
                   false -> << Key/binary, Body/binary, MBin/binary, Padding/binary >>
               end,
+		%% object在平坦文件中存储的数据方式
+		%% 校验值
+		%% key的大小
+		%% 数据的大小
+		%% 元信息的大小
+		%% 文件的偏移开始
+		%% AddrID 到 DEL前为版本信息？
+		%% del是否删除了
+		%% Csize 到 CIndex含义不明
+		%% 0 为头信息和数据的分割信息
+		%% DataBin 包含key和块数据，Padding为页面分割
     Needle  = << Checksum:?BLEN_CHKSUM,
                  KSize:?BLEN_KSIZE,
                  DSize:?BLEN_DSIZE,
@@ -621,7 +634,7 @@ put_fun_3(MetaDBId, StorageInfo, Needle, #?METADATA{key      = Key,
                                                     checksum = Checksum} = Meta) ->
     #backend_info{write_handler = WriteHandler,
                   avs_ver_cur   = AVSVsnBin} = StorageInfo,
-
+		%% 得到数据库的key
     Key4BackendDB = ?gen_backend_key(AVSVsnBin, AddrId, Key),
     %% 写入文件
     case file:pwrite(WriteHandler, Offset, Needle) of

@@ -215,6 +215,7 @@ get_fun(AddrId, Key, StartPos, EndPos, IsForcedCheck) ->
 -spec(put(ObjAndRef) ->
              {ok, reference(), tuple()} |
              {error, reference(), any()} when ObjAndRef::{#?OBJECT{}, reference()}).
+%% 添加一个块
 put({Object, Ref}) ->
     AddrId = Object#?OBJECT.addr_id,
     Key    = Object#?OBJECT.key,

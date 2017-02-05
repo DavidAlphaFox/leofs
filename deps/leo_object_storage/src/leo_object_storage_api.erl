@@ -330,6 +330,7 @@ du_and_compaction_stats() ->
 %% @doc Retrieve the storage process-id
 -spec(get_object_storage_pid(Arg) ->
              [atom()] when Arg::all | any()).
+%% 从ets中进行查询块存储的进程pid
 get_object_storage_pid(Arg) ->
     Ret = ets:tab2list(?ETS_CONTAINERS_TABLE),
     get_object_storage_pid(Ret, Arg).
@@ -576,8 +577,10 @@ do_request(delete, [Key, Object]) ->
         _ ->
             {error, ?ERROR_PROCESS_NOT_FOUND}
     end;
+%% 获取指定key的元信息
 do_request(head, [{AddrId, Key}]) ->
     KeyBin = term_to_binary({AddrId, Key}),
+		%% 得到块存储进程的pid
     case get_object_storage_pid(KeyBin) of
         [Pid|_] ->
             ?SERVER_MODULE:head(Pid, {AddrId, Key});

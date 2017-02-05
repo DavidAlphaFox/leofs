@@ -109,6 +109,8 @@ start_child(ObjectStorageInfo) ->
              ok | no_return() when CallbackMod::module()|undefined).
 start_child(ObjectStorageInfo, CallbackMod) ->
     %% initialize ets-tables
+		%% 初始化环境
+		%% 创建命名ets表
     ok = leo_misc:init_env(),
     catch ets:new(?ETS_CONTAINERS_TABLE,
                   [named_table, ordered_set, public, {read_concurrency, true}]),
@@ -117,8 +119,9 @@ start_child(ObjectStorageInfo, CallbackMod) ->
 
     MetadataDB = ?env_metadata_db(),
     IsStrictCheck = ?env_strict_check(),
-
+		%% 启动元信息的db
     BackendDBSupPid = start_child_1(),
+		%% 启动日志
     ok = start_child_2(),
     {ok, ServerPairL} = start_child_3(ObjectStorageInfo, 0,
                                      MetadataDB, BackendDBSupPid,
@@ -355,7 +358,7 @@ add_container_1(leo_compact_fsm_worker = Mod,
                                     {body, Cause}]),
             {error, Cause}
     end.
-
+%% 增加容器
 add_container_1(leo_object_storage_server = Mod, BaseId,
                 ObjStorageId, MetaDBId, CompactWorkerId, LoggerId, Props) ->
     Path          = leo_misc:get_value('path',            Props),

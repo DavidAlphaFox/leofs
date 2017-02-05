@@ -465,9 +465,11 @@ handle_call({delete, #?OBJECT{addr_id = AddrId,
     {reply, Reply, State_1};
 
 %% Head an object
+%% 获取一个块的元信息
 handle_call({head, {AddrId, Key}},
             _From, #state{meta_db_id = MetaDBId,
                           object_storage = StorageInfo} = State) ->
+		%% 获取存储真正的key
     BackendKey = ?gen_backend_key(StorageInfo#backend_info.avs_ver_cur,
                                   AddrId, Key),
     Reply = leo_object_storage_haystack:head(MetaDBId, BackendKey),
