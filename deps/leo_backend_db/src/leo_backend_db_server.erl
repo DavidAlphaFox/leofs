@@ -191,6 +191,7 @@ get_db_raw_filepath(Id) ->
 %%--------------------------------------------------------------------
 %% @doc gen_server callback - Module:init(Args) -> Result
 init([Id, leo_backend_db_ets = DBModule, Table]) ->
+		%% 打开DB
     ok = DBModule:open(Table),
     {ok, #state{id = Id,
                 db = DBModule,

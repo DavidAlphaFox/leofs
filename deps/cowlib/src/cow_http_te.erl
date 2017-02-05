@@ -138,8 +138,10 @@ stream_chunked(Data, State) ->
 
 %% New chunk.
 stream_chunked(Data = << C, _/bits >>, {0, Streamed}, Acc) when C =/= $\r ->
+		%% 先要解析chunked长度
 	case chunked_len(Data, Streamed, Acc, 0) of
 		{next, Rest, State, Acc2} ->
+			%% 获取相应的数据
 			stream_chunked(Rest, State, Acc2);
 		{more, State, Acc2} ->
 			{more, Acc2, Data, State};

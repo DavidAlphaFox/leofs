@@ -331,6 +331,7 @@ parse_header(Name, Req=#http_req{p_headers=PHeaders}) ->
 	end.
 
 -spec parse_header_default(binary()) -> any().
+%% transfer-encoding的默认值是identity
 parse_header_default(<<"transfer-encoding">>) -> [<<"identity">>];
 parse_header_default(_Name) -> undefined.
 
@@ -405,10 +406,14 @@ parse_header(Name, Req, Default) ->
 	{undefined, Value, Req2}.
 
 parse_header(Name, Req=#http_req{p_headers=PHeaders}, Default, Fun) ->
+	%% 从header中找到相应的key
 	case header(Name, Req) of
 		{undefined, Req2} ->
+			%% 没找到的时候，直接用Default来填充
 			{ok, Default, Req2#http_req{p_headers=[{Name, Default}|PHeaders]}};
+			%% 找到值了
 		{Value, Req2} ->
+					%% 用特定的函数进行解析
 			case Fun(Value) of
 				{error, badarg} ->
 					{error, badarg};
@@ -502,6 +507,7 @@ body(Req) ->
 	| {error, atom()} when Req::req().
 body(Req=#http_req{body_state=waiting}, Opts) ->
 	%% Send a 100 continue if needed (enabled by default).
+	%% 是否使用100
 	Req1 = case lists:keyfind(continue, 1, Opts) of
 		{_, false} ->
 			Req;
@@ -523,10 +529,15 @@ body(Req=#http_req{body_state=waiting}, Opts) ->
 	case lists:keyfind(transfer_decode, 1, Opts) of
 		false ->
 			case parse_header(<<"transfer-encoding">>, Req1) of
+				%% 不指定transfer_decode的时候
+				%% 自己找
 				{ok, [<<"chunked">>], Req2} ->
+							%% 如果是chunked的化，直接用stream模式
 					body(Req2#http_req{body_state={stream, 0,
 						fun cow_http_te:stream_chunked/2, {0, 0}, CFun}}, Opts);
 				{ok, [<<"identity">>], Req2} ->
+							%% 没有transfer-encoding这个头
+							%% HTTP/1.1 规定只要有transfer-encoding这个头必然要是chunked
 					{Len, Req3} = body_length(Req2),
 					case Len of
 						0 ->
@@ -543,6 +554,7 @@ body(Req=#http_req{body_state=waiting}, Opts) ->
 	end;
 body(Req=#http_req{body_state=done}, _) ->
 	{ok, <<>>, Req};
+%% body进入stream的状态
 body(Req, Opts) ->
 	ChunkLen = case lists:keyfind(length, 1, Opts) of
 		false -> 8000000;
@@ -557,11 +569,12 @@ body(Req, Opts) ->
 		{_, ReadTimeout0} -> ReadTimeout0
 	end,
 	body_loop(Req, ReadTimeout, ReadLen, ChunkLen, <<>>).
-
+%% 循环的读取数据
 body_loop(Req=#http_req{buffer=Buffer, body_state={stream, Length, _, _, _}},
 		ReadTimeout, ReadLength, ChunkLength, Acc) ->
 	{Tag, Res, Req2} = case Buffer of
 		<<>> ->
+														 
 			body_recv(Req, ReadTimeout, min(Length, ReadLength));
 		_ ->
 			body_decode(Req, ReadTimeout)

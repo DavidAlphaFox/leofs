@@ -129,6 +129,7 @@ get_object_with_cache(Req, Key, CacheObj, Params) ->
 %% @doc POST/PUT operation on Objects
 -spec(put_object(cowboy_req:req(), binary(), #req_params{}) ->
              {ok, cowboy_req:req()}).
+%% 放入一个key和value
 put_object(Req, Key, Params) ->
     leo_gateway_http_commons:put_object(Req, Key, Params).
 

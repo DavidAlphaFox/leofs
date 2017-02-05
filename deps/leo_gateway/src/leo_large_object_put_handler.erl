@@ -129,9 +129,10 @@ handle_call({put, Bin}, _From, #state{key = Key,
     Size  = erlang:byte_size(Bin),
     TotalLen_1 = TotalLen + Size,
     Bin_1 = << StackedBin/binary, Bin/binary >>,
-
+		%% 当出现数据大于最大块大小的时候
     case (erlang:byte_size(Bin_1) >= MaxObjLen) of
         true ->
+						%% 进行数据切分
             NumOfChunksBin = list_to_binary(integer_to_list(NumOfChunks)),
             << Bin_2:MaxObjLen/binary, StackedBin_1/binary >> = Bin_1,
             Fun = fun() ->
@@ -143,6 +144,8 @@ handle_call({put, Bin}, _From, #state{key = Key,
                           AsyncNotify = {async_notify, ChunkedKey, Ret},
                           erlang:send(self(), AsyncNotify)
                   end,
+						%% 创建一个独立运行的进程，不是用link方式，而是直接用monitor的方式
+						%% 该进程负责将这个块放入后端存储中
             SpawnRet = erlang:spawn_monitor(Fun),
             Context_1 = crypto:hash_update(Context, Bin_2),
             {reply, ok, State#state{stacked_bin   = StackedBin_1,

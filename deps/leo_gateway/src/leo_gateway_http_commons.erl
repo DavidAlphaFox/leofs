@@ -495,13 +495,16 @@ move_large_object_1(done, #req_large_obj{handler = WriteHandler,
 %% @doc PUT an object
 -spec(put_object(cowboy_req:req(), binary(), #req_params{}) ->
              {ok, cowboy_req:req()}).
+%% 放入一个块
 put_object(Req, Key, #req_params{bucket = Bucket,
                                  is_upload = IsUpload,
                                  timeout_for_body = Timeout4Body,
                                  max_len_of_obj = MaxLenForObj,
                                  threshold_of_chunk_len = ThresholdObjLen} = Params) ->
+		%% 从http中得到块的大小
     {Size, _} = cowboy_req:body_length(Req),
     case (Size >= ThresholdObjLen) of
+				%% 如果块超长了,且超过最大的限制了
         true when Size >= MaxLenForObj ->
             ?access_log_put(Bucket, Key, 0, ?HTTP_ST_BAD_REQ),
             ?reply_bad_request([?SERVER_HEADER],
@@ -510,13 +513,16 @@ put_object(Req, Key, #req_params{bucket = Bucket,
                                Key, <<>>, Req);
 
         true when IsUpload == false ->
+						%% 块超长，还没上传
             put_large_object(Req, Key, Size, Params);
-
+				%% 小文件
         false ->
             Ret = case cowboy_req:has_body(Req) of
                       true ->
+													%% 可以到到文件体
                           BodyOpts = [{read_timeout, Timeout4Body}],
                           case cowboy_req:body(Req, BodyOpts) of
+															%% 拿出文件体
                               {ok, Bin0, Req0} ->
                                   {ok, {Size, Bin0, Req0}};
                               {error, Cause} ->
@@ -525,6 +531,7 @@ put_object(Req, Key, #req_params{bucket = Bucket,
                       false ->
                           {ok, {0, ?BIN_EMPTY, Req}}
                   end,
+						%% 放小文件
             put_small_object(Ret, Key, Params)
     end.
 
@@ -591,10 +598,12 @@ put_large_object(Req, Key, Size, #req_params{bucket = Bucket,
                                              chunked_obj_len = ChunkedSize,
                                              reading_chunked_obj_len = ReadingChunkedSize})->
     %% launch 'large_object_handler'
+		%% 启动独立进程
     {ok, Handler}  = leo_large_object_put_handler:start_link(Key, ChunkedSize),
 
     %% remove a registered object with 'touch-command'
     %% from the cache
+		%% 清理缓存
     catch leo_cache_api:delete(Key),
 
     %% retrieve an object from the stream,
